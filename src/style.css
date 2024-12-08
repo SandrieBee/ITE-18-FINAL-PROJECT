@@ -1,0 +1,168 @@
+*
+{
+    margin: 0;
+    padding: 0;
+}
+
+.webgl
+{
+    position: fixed;
+    top: 0;
+    left: 0;
+    outline: none;
+}
+
+html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden; 
+    height: 100%; 
+}
+
+canvas {
+    display: block; 
+    width: 100%; 
+    height: 100%; 
+}
+
+
+
+body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #1e1e2f, #303054);
+    color: white;
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    overflow: hidden;
+}
+
+
+
+/* Game Title */
+#gameName {
+    font-size: 5rem;
+    color: #ffdd57;
+    text-shadow: 0px 4px 10px rgba(255, 221, 87, 0.8);
+    font-family: 'Orbitron', sans-serif;
+    margin-bottom: 20px;
+    margin-top: 50px;
+    padding: 30px;
+}
+
+#main-menu {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; 
+    width: 100vw; 
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#main-menu h3 {
+    font-size: 2rem; 
+    font-weight: bold;
+    color: #6ee7b7; 
+    text-shadow: 0px 4px 8px rgba(110, 231, 183, 0.8); /*glow effect */
+    margin-top: 50px;
+    padding: 10px;
+    font-family: 'Orbitron', sans-serif; 
+    text-transform: uppercase; 
+}
+
+/* Story */
+#ZycksStory {
+    font-size: 1.2rem;
+    color: #f2f2f2;
+    line-height: 1.8;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    margin: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+    max-width: 80%;
+    text-align: center;
+}
+/* Buttons */
+.button {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #ffffff;
+    background: linear-gradient(135deg, #4c6ef5, #4263eb);
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    margin: 10px;
+    cursor: pointer;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* Start Button Specific Styling */
+#start-btn {
+    background: linear-gradient(135deg, #6ee7b7, #34d399);
+}
+
+/* Toggle Volume Button Specific Styling */
+#volume-btn {
+    background: linear-gradient(135deg, #f6fb71, #f4e53f);
+    color: black;
+}
+
+/* Info Icon */
+#info-icon {
+    position: absolute;
+    top: 30px;
+    left: 50px;
+    font-size: 36px;
+    cursor: pointer;
+    color: white;
+    display: inline-block;
+    z-index: 1000;
+}
+
+/* Modal inside the icon */
+#info-modal {
+    position: absolute;
+    top: 0px; 
+    left: 50px;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    width: 250px;
+    display: none;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+#info-modal h2 {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+#info-modal p {
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+#menu-music {
+    display: none; 
+}
+
+#controls {
+    position: absolute;
+    top: 10px;
+    left: 100px;
+    z-index: 10;
+}
+
+button {
+    margin: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
