@@ -11,8 +11,7 @@ let gameSTART = false;  // Boolean to track if the game has started (controls th
 let isPaused = false; // Pause game 
 let boxSpeed = 0.09; // Default box movement speed
 const initialBoxSpeed = 0.09; // Initial speed for resets
-let restartFlag = false;
-let isRestarting = false;
+let animationId = null;
 
 // Generates a box in the 3D world and physics engine
 function generateBox(x, y, z, width, depth, falls) {
@@ -117,41 +116,38 @@ function cutBox(topLayer, overlap, size, delta) {
 }
 
 function gameOver() {
-    renderer.setAnimationLoop(null);
+    if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+    
+    gameSTART = false;
     alert("Game Over! You missed the stack.");
 }
 
 function updateButtonVisibility() {
     const controls = document.getElementById("controls");
-    if (isPaused || !gameSTART) {
+    if (!gameSTART) {
         controls.style.display = "block";
     } else {
         controls.style.display = "none";
     }
 }
 
-function pauseGame() {
-    if (isPaused) {
-        isPaused = false;
-        console.log("Game Resumed");
-        renderer.setAnimationLoop(animation); // Resume the animation loop
-    } else {
-        isPaused = true;
-        console.log("Game Paused");
-        renderer.setAnimationLoop(null); // Pause the animation loop
-    }
-    updateButtonVisibility(); // Update the button visibility
-}
-
-let gameRestarted = false;  // Flag to control the restart logic
+let restartFlag = false;
+let isRestarting = false;
 
 function restartGame() {
-    if (restartFlag || isRestarting) return; // Prevent restarting if already in progress
+    if (restartFlag && isRestarting) return; // Prevent restarting if already in progress
     isRestarting = true;
     restartFlag = true;
-    
+
     console.log("Restarting game...");
-    // Stop the animation loop completely to avoid redundant calls
+    // Stop the animation loop completely
+    if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
     renderer.setAnimationLoop(null);
 
     // Reset game variables and state
@@ -182,41 +178,49 @@ function restartGame() {
 
     // Restart the animation loop after a brief delay
     setTimeout(() => {
-        renderer.setAnimationLoop(animation); // Restart animation loop
-        console.log("Game Restarted Successfully");
-        isRestarting = false; // Allow restart flag to reset
+        isRestarting = false;
         restartFlag = false;
-    }, 500); // Adjust delay if necessary
-
+        gameSTART = true; // Set gameSTART to true to begin the game immediately
+        animationId = requestAnimationFrame(animation); // Start the animation loop
+        console.log("Game Restarted Successfully");
+    }, 500);
 }
-
-
 
 // Animation Loop
 function animation() {
-    if (isRestarting) {
-        return
-    }; 
-    const speed = boxSpeed;
+    if (isRestarting && gameSTART) {
+        return;
+    } else {
+        let speed = null;
 
-    const topLayer = stack[stack.length - 1];
-    topLayer.threejs.position[topLayer.direction] += speed;
-    topLayer.cannonjs.position[topLayer.direction] += speed;
+        if (isPaused) {
+            speed = 0.9;
+        }
+        else {
+            speed = boxSpeed;
 
-    const position = topLayer.threejs.position[topLayer.direction];
-    if (Math.abs(position) > 10) {
-        stack.pop();
-        generateNewLayer();
+            const topLayer = stack[stack.length - 1];
+            topLayer.threejs.position[topLayer.direction] += speed;
+            topLayer.cannonjs.position[topLayer.direction] += speed;
+
+            const position = topLayer.threejs.position[topLayer.direction];
+            if (Math.abs(position) > 10) {
+                stack.pop();
+                generateNewLayer();
+            }
+
+            if (camera.position.y < boxHeight * (stack.length - 2) + 4) {
+                camera.position.y += speed;
+            }
+
+            updatePhysics();
+            renderer.render(scene, camera);
+
+            // Use requestAnimationFrame instead of renderer.setAnimationLoop
+            animationId = requestAnimationFrame(animation);
+        }
     }
-
-    if (camera.position.y < boxHeight * (stack.length - 2) + 4) {
-        camera.position.y += speed;
-    }
-
-    updatePhysics();
-    renderer.render(scene, camera);
 }
-
 
 function generateNewLayer() {
     // Get the current top layer's width and depth
@@ -293,16 +297,18 @@ const infoModal = document.getElementById('info-modal');
 
 const menuMusic = document.getElementById("menu-music");
 
-//pause & restart
-document.getElementById("pause-btn").addEventListener("click", pauseGame);
-
 const restartButton = document.getElementById('restart-btn')
 let isRestartButtonClicked = false;
 
 restartButton.addEventListener('click', function() {
-    if (isRestartButtonClicked) return;
-    isRestartButtonClicked = true;
-    restartGame();
+    if (!isRestartButtonClicked) { 
+        isRestartButtonClicked = false;
+        restartGame();
+    } else {
+        isRestartButtonClicked = true;
+        restartGame();
+        console.log("Game Restarted");
+    }
 
     // Reset button click flag after a small delay
     setTimeout(() => {
@@ -349,10 +355,11 @@ function startGame() {
 }
 
 function handleInput() {
-    if (!gameSTART) {
-        renderer.setAnimationLoop(animation); // Start the animation loop
+    if (!gameSTART || isPaused) {
         gameSTART = true;
-    } else {
+        animationId = requestAnimationFrame(animation);
+        return;
+    }else if (gameSTART){
         const topLayer = stack[stack.length - 1];
         const previousLayer = stack[stack.length - 2];
 
@@ -386,8 +393,10 @@ function handleInput() {
 
             addLayer(nextX, nextZ, topLayer.width, topLayer.depth, newDirection);
         } else {
-            // Missed stack, game over
             gameOver();
+            gameSTART = false;
+            updatePhysics();
+            restartGame()
         }
     }
 }
@@ -398,6 +407,7 @@ window.addEventListener('click', handleInput);
 window.addEventListener('keydown', (event) => {
     if (event.code === 'Space') {
         handleInput();
+        event.preventDefault();  // Prevent page scrolling when spacebar is pressed
     }
 });
 
