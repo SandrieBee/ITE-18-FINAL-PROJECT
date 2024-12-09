@@ -115,14 +115,45 @@ function cutBox(topLayer, overlap, size, delta) {
     topLayer.depth = newDepth;  // Update depth
 }
 
-function gameOver() {
+/*function gameOver() {
     if (animationId !== null) {
         cancelAnimationFrame(animationId);
         animationId = null;
     }
     
     gameSTART = false;
-    alert("Game Over! You missed the stack.");
+    alert("Game Over! You missed the stack. Would you like to go back?");
+    
+}*/
+
+function gameOver() {
+    // Stop the animation
+    if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+
+    // Pause game state
+    gameSTART = false;
+
+    // Ask the user if they want to go back to the main menu
+    const userChoice = confirm("Game Over! Do you want to go back to the main menu? (Press 'Cancel' to restart the game)");
+
+    if (userChoice) {
+        // YES: Go back to the main menu
+        goToMainMenu();
+    } else {
+        // NO: Restart the game
+        restartGame();
+    }
+}
+
+// Function to handle going back to the main menu
+function goToMainMenu() {
+    // Example logic for going back to the main menu
+    console.log("Returning to the main menu...");
+    // Here you can redirect to the main menu or reset the game scene
+    window.location.reload(); // Reload the page (simplest way)
 }
 
 function updateButtonVisibility() {
@@ -291,15 +322,8 @@ function init() {
 
 
 //BUTTONS: 
-const startBtn = document.getElementById('start-btn');
-const volumeBtn = document.getElementById('volume-btn');
-const infoModal = document.getElementById('info-modal');
-
-const menuMusic = document.getElementById("menu-music");
-
 const restartButton = document.getElementById('restart-btn')
 let isRestartButtonClicked = false;
-
 restartButton.addEventListener('click', function() {
     if (!isRestartButtonClicked) { 
         isRestartButtonClicked = false;
@@ -315,9 +339,10 @@ restartButton.addEventListener('click', function() {
         isRestartButtonClicked = false;
     }, 1000); // Adjust this delay if needed
 });
-//info
-const infoIcon = document.getElementById("toggle-info");
 
+//info
+const infoModal = document.getElementById('info-modal');
+const infoIcon = document.getElementById("toggle-info");
 // Toggle the modal visibility when the icon is clicked
 infoIcon.addEventListener("click", () => {
     if (infoModal.style.display === "none" || infoModal.style.display === "") {
@@ -327,6 +352,9 @@ infoIcon.addEventListener("click", () => {
     }
 });
 
+const startBtn = document.getElementById('start-btn');
+const volumeBtn = document.getElementById('volume-btn');
+const menuMusic = document.getElementById("menu-music");
 // Start Game Event
 startBtn.addEventListener('click', () => {
     document.getElementById('main-menu').style.display = 'none';
@@ -350,8 +378,8 @@ function startGame() {
     console.log("Game Started");
     init();
 
-    updateButtonVisibility(); // Hide buttons at the start
-    // Add your Three.js game initialization code here
+    updateButtonVisibility();
+    
 }
 
 function handleInput() {
