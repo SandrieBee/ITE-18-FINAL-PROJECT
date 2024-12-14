@@ -19,10 +19,10 @@ function generateBox(x, y, z, width, depth, falls) {
     const boxGeometry = new THREE.BoxGeometry(width, boxHeight, depth);
     
     // Generate a dynamic color based on stack height using HSL (hue increases with each layer)
-    //const color = new THREE.Color(`hsl(${30 + stack.length * 4}, 100%, 50%)`);
     const hue = Math.min(120, 30 + stack.length * 3); // Caps the hue at 120 for green
     const lightness = Math.min(50, 30 + stack.length * 0.5); // Caps lightness at 50%
     const color = new THREE.Color(`hsl(${hue}, 100%, ${lightness}%)`);
+    
     // Create the material for the box using the computed color
     const boxMaterial = new THREE.MeshLambertMaterial({ color });
 
@@ -56,7 +56,7 @@ function addLayer(x, z, width, depth, direction) {
     // Calculate the vertical position based on the number of existing layers
     const y = boxHeight * stack.length;
 
-    // Create the new layer using generateBox (falls is false because it’s part of the stack)
+    // Create the new layer using generateBox (falls is false because it's part of the stack)
     const layer = generateBox(x, y, z, width, depth, false);
     
     // Assign the movement direction for the new layer ('x' or 'z')
@@ -115,50 +115,118 @@ function cutBox(topLayer, overlap, size, delta) {
     topLayer.depth = newDepth;  // Update depth
 }
 
-/*function gameOver() {
+function gameOver() {
     if (animationId !== null) {
         cancelAnimationFrame(animationId);
         animationId = null;
     }
-    
     gameSTART = false;
-    alert("Game Over! You missed the stack. Would you like to go back?");
+    alert("Game Over! You missed the stack.");
+}
+
+function updateButtonVisibility() {
+    const controls = document.getElementById("controls");
+    if (isPaused || !gameSTART) {
+        controls.style.display = "block";
+    } else {
+        controls.style.display = "none";
+    }
+}
+
+function pauseGame() {
+    isPaused = !isPaused;
     
-}*/
+    if (isPaused) {
+        console.log("Game Paused");
+        if (animationId !== null) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+    } else {
+        console.log("Game Resumed");
+        if (gameSTART) {
+            animationId = requestAnimationFrame(animation);
+        }
+    }
+    
+    updateButtonVisibility();
+}
+
+function restartGame() {
+    if (restartFlag || isRestarting) return;
+    isRestarting = true;
+    restartFlag = true;
+
+    console.log("Restarting game...");
+    
+    // Stop the current animation loop
+    if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+
+    // Clear scene and physics world
+    while (scene.children.length > 0) {
+        const child = scene.children[0];
+        scene.remove(child);
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) child.material.dispose();
+    }
+
+    while (world.bodies.length > 0) {
+        world.removeBody(world.bodies[0]);
+    }
+
+    // Reset game variables
+    stack = [];
+    overhangs = [];
+    gameSTART = false;
+    boxSpeed = initialBoxSpeed;
+    isPaused = false;
+
+    // Reset camera
+    camera.position.set(4, 4, 4);
+    camera.lookAt(0, 0, 0);
+
+    // Reinitialize game
+    init();
+
+    // Set up a clean start
+    setTimeout(() => {
+        isRestarting = false;
+        restartFlag = false;
+        updateButtonVisibility();
+    }, 500);
+}
 
 // Animation Loop
 function animation() {
-    if (isRestarting && gameSTART) {
+    if (isPaused || isRestarting || !gameSTART) {
         return;
-    } else {
-        let speed = null;
+    }
 
-        if (isPaused) {
-            speed = 0.9;
-        }
-        else {
-            speed = boxSpeed;
+    const speed = boxSpeed;
 
-            const topLayer = stack[stack.length - 1];
-            topLayer.threejs.position[topLayer.direction] += speed;
-            topLayer.cannonjs.position[topLayer.direction] += speed;
+    const topLayer = stack[stack.length - 1];
+    topLayer.threejs.position[topLayer.direction] += speed;
+    topLayer.cannonjs.position[topLayer.direction] += speed;
 
-            const position = topLayer.threejs.position[topLayer.direction];
-            if (Math.abs(position) > 10) {
-                stack.pop();
-                generateNewLayer();
-            }
+    const position = topLayer.threejs.position[topLayer.direction];
+    if (Math.abs(position) > 10) {
+        stack.pop();
+        generateNewLayer();
+    }
 
-            if (camera.position.y < boxHeight * (stack.length - 2) + 4) {
-                camera.position.y += speed;
-            }
+    if (camera.position.y < boxHeight * (stack.length - 2) + 4) {
+        camera.position.y += speed;
+    }
 
-            updatePhysics();
-            renderer.render(scene, camera);
+    updatePhysics();
+    renderer.render(scene, camera);
 
-            // Use requestAnimationFrame instead of renderer.setAnimationLoop
-            animationId = requestAnimationFrame(animation);
-        }
+    // Only request next animation frame if game is running
+    if (!isPaused && gameSTART) {
+        animationId = requestAnimationFrame(animation);
     }
 }
 
@@ -229,112 +297,38 @@ function init() {
     });
 }
 
-function gameOver() {
-    if (!gameSTART) {
-        console.warn("gameOver() called, but gameSTART is false. Ignoring.");
-        return; // Do nothing if the game hasn't started
-    }
+//BUTTONS: 
+const startBtn = document.getElementById('start-btn');
+const volumeBtn = document.getElementById('volume-btn');
+const infoModal = document.getElementById('info-modal');
 
-    console.log("Game Over!");
+const menuMusic = document.getElementById("menu-music");
 
-    // Stop the animation
-    if (animationId !== null) {
-        cancelAnimationFrame(animationId);
-        animationId = null;
-    }
-
-    // Reset the game state
-    gameSTART = false;
-
-    const userChoice = confirm("Game Over! Do you want to go back to the main menu? (Press 'Cancel' to restart the game)");
-    if (userChoice) {
-        goToMainMenu();
-    } else {
-        restartGame();
-    }
-}
-// Function to handle going back to the main menu
-function goToMainMenu() {
-    console.log("Returning to the main menu...");
-    window.location.reload();
-}
-
-function updateButtonVisibility() {
-  
-    const infoIcon = document.getElementById("toggle-info");
-    const startBtn = document.getElementById('start-btn');
-    const volumeBtn = document.getElementById('volume-btn');
-
-    // Check if the buttons exist before accessing their properties
-    if (infoIcon) infoIcon.style.display = 'none';
-    if (startBtn) startBtn.style.display = 'none';
-    if (volumeBtn) volumeBtn.style.display = 'none';
-
-    console.log("Button visibility updated.");
-}
-
+//pause & restart
+document.getElementById("pause-btn").addEventListener("click", pauseGame);
 
 let restartFlag = false;
 let isRestarting = false;
 
-function restartGame() {
-    if (restartFlag && isRestarting) return; // Prevent restarting if already in progress
-    isRestarting = true;
-    restartFlag = true;
+const restartButton = document.getElementById('restart-btn')
+let isRestartButtonClicked = false;
 
-    console.log("Restarting game...");
-    // Stop the animation loop completely
-    if (animationId !== null) {
-        cancelAnimationFrame(animationId);
-        animationId = null;
-    }
-    renderer.setAnimationLoop(null);
+restartButton.addEventListener('click', function() {
+    if (isRestartButtonClicked) return;
+    isRestartButtonClicked = true;
+    restartGame();
 
-    // Reset game variables and state
-    stack = [];
-    overhangs = [];
-    gameSTART = false;
-    boxSpeed = initialBoxSpeed;
-    isPaused = false;
-
-    // Reset Three.js and Cannon.js objects
-    while (scene.children.length > 0) {
-        const child = scene.children[0];
-        scene.remove(child);
-        if (child.geometry) child.geometry.dispose();
-        if (child.material) child.material.dispose();
-    }
-
-    while (world.bodies.length > 0) {
-        world.removeBody(world.bodies[0]);
-    }
-
-    // Reset camera position
-    camera.position.set(4, 4, 4);
-    camera.lookAt(0, 0, 0);
-
-    // Reinitialize game state
-    init();
-
-    // Restart the animation loop after a brief delay
+    // Reset button click flag after a small delay
     setTimeout(() => {
-        isRestarting = false;
-        restartFlag = false;
-        gameSTART = true; // Set gameSTART to true to begin the game immediately
-        animationId = requestAnimationFrame(animation); // Start the animation loop
-        console.log("Game Restarted Successfully");
-    }, 500);
-}
-
-
-//BUTTONS: 
+        isRestartButtonClicked = false;
+    }, 1000); // Adjust this delay if needed
+});
 
 //info
-const infoModal = document.getElementById('info-modal');
 const infoIcon = document.getElementById("toggle-info");
+
 // Toggle the modal visibility when the icon is clicked
-infoIcon.addEventListener("click", (event) => {
-    event.stopPropagation()
+infoIcon.addEventListener("click", () => {
     if (infoModal.style.display === "none" || infoModal.style.display === "") {
         infoModal.style.display = "block";
     } else {
@@ -342,15 +336,9 @@ infoIcon.addEventListener("click", (event) => {
     }
 });
 
-const startBtn = document.getElementById('start-btn');
-const volumeBtn = document.getElementById('volume-btn');
-const menuMusic = document.getElementById("menu-music");
 // Start Game Event
-startBtn.addEventListener('click', (event) => {
-    event.stopPropagation()
+startBtn.addEventListener('click', () => {
     document.getElementById('main-menu').style.display = 'none';
-    infoIcon.style.display = 'none';
-    infoModal.style.display = 'none';
     menuMusic.pause();
     menuMusic.currentTime = 0; // Reset to start
     
@@ -358,8 +346,7 @@ startBtn.addEventListener('click', (event) => {
 });
 
 // Toggle Volume Event
-volumeBtn.addEventListener("click", (event) => {
-    event.stopPropagation()
+volumeBtn.addEventListener("click", () => {
     if (menuMusic.paused) {
         menuMusic.play();
     } else {
@@ -370,49 +357,29 @@ volumeBtn.addEventListener("click", (event) => {
 // Placeholder Game Start Function
 function startGame() {
     console.log("Game Started");
-
-    // Explicitly start the game state
-    gameSTART = true;
-
-    window.removeEventListener('click', handleInput);
-    window.addEventListener('click', handleInput);
-    // Initialize game components
     init();
+    gameSTART = true;
+    isPaused = false;
+    animationId = requestAnimationFrame(animation);
     updateButtonVisibility();
-    animationId = requestAnimationFrame(animation); // Start the animation loop
-}
-
-const stackingSound = new Audio("/soundEffect.mp3");
-
-function playStackingSound() {
-    stackingSound.currentTime = 0; // Reset sound to the beginning
-    stackingSound.play().catch((error) => {
-        console.error("Error playing stacking sound:", error);
-    });
 }
 
 function handleInput() {
-    if (!gameSTART) {
-        gameSTART = true;
-        animationId = requestAnimationFrame(animation);
-        return;
-    
-    }else if (gameSTART){
-        const topLayer = stack[stack.length - 1];
-        const previousLayer = stack[stack.length - 2];
+    if (!gameSTART || isPaused) return;
 
-        const direction = topLayer.direction;
-        const delta = topLayer.threejs.position[direction] - previousLayer.threejs.position[direction];
+    const topLayer = stack[stack.length - 1];
+    const previousLayer = stack[stack.length - 2];
 
-        const overhangSize = Math.abs(delta);
-        const size = direction === 'x' ? topLayer.width : topLayer.depth;
-        const overlap = size - overhangSize;
+    const direction = topLayer.direction;
+    const delta = topLayer.threejs.position[direction] - previousLayer.threejs.position[direction];
 
-        if (overlap > 0) {
+    const overhangSize = Math.abs(delta);
+    const size = direction === 'x' ? topLayer.width : topLayer.depth;
+    const overlap = size - overhangSize;
 
-            playStackingSound()
-            // Successful stack: cut the box and add a new layer
-            cutBox(topLayer, overlap, size, delta);
+    if (overlap > 0) {
+        // Successful stack: cut the box and add a new layer
+        cutBox(topLayer, overlap, size, delta);
 
             const overhangShift = (overlap / 2 + overhangSize / 2) * Math.sign(delta);
             const overhangX = direction === 'x'
@@ -432,13 +399,11 @@ function handleInput() {
             const newDirection = direction === 'x' ? 'z' : 'x';
 
             addLayer(nextX, nextZ, topLayer.width, topLayer.depth, newDirection);
-        } else {
-            gameOver();
-            gameSTART = false;
-            updatePhysics();
-            restartGame()
-        }
+    } else {
+        // Missed stack, game over
+        gameOver();
     }
+    updatePhysics();
 }
 
 // Add event listeners for both click and spacebar key press
@@ -447,7 +412,5 @@ window.addEventListener('click', handleInput);
 window.addEventListener('keydown', (event) => {
     if (event.code === 'Space') {
         handleInput();
-        event.preventDefault();  // Prevent page scrolling when spacebar is pressed
     }
 });
-
