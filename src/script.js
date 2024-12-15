@@ -1,9 +1,9 @@
-import * as THREE from 'three';
-import * as CANNON from 'cannon-es';
+import * as THREE from 'three'
+import * as CANNON from 'cannon-es'
 
 // Global variables
-let camera, scene, renderer, world;  // Core components: Three.js camera, scene, renderer, and Cannon.js physics world
-const originalBoxSize = 2;  // The initial width and depth of the first box in the stack
+let camera, scene, renderer, world;
+const originalBoxSize = 2;  // initial width and depth of the first box in the stack
 let stack = [];  // Array to store the stacked layers (each layer is an object containing its Three.js and Cannon.js representations)
 let overhangs = [];  // Array to store falling or overhanging parts of the boxes
 const boxHeight = 0.5;  // The uniform height of each box layer
@@ -12,6 +12,7 @@ let isPaused = false; // Pause game
 let boxSpeed = 0.09; // Default box movement speed
 const initialBoxSpeed = 0.09; // Initial speed for resets
 let animationId = null;
+
 
 // Generates a box in the 3D world and physics engine
 function generateBox(x, y, z, width, depth, falls) {
@@ -23,21 +24,20 @@ function generateBox(x, y, z, width, depth, falls) {
     const hue = Math.min(120, 30 + stack.length * 3); // Caps the hue at 120 for green
     const lightness = Math.min(50, 30 + stack.length * 0.5); // Caps lightness at 50%
     const color = new THREE.Color(`hsl(${hue}, 100%, ${lightness}%)`);
-    // Create the material for the box using the computed color
+    
     const boxMaterial = new THREE.MeshLambertMaterial({ color });
 
-    // Create the Three.js mesh (visual representation) and set its position
     const box = new THREE.Mesh(boxGeometry, boxMaterial);
     box.position.set(x, y, z);
-    scene.add(box);  // Add the box to the scene for rendering
+    scene.add(box);  
 
-    // Create the corresponding physics body in Cannon.js
+    // corresponding physics body in Cannon.js
     const shape = new CANNON.Box(new CANNON.Vec3(width / 2, boxHeight / 2, depth / 2));
     
     // If the box is an overhang (falls), assign a mass, otherwise set it to 0 (static)
     let mass = falls ? 5 : 0;
     
-    // Create the physics body with the specified mass and shape
+    // body with the specified mass and shape
     const body = new CANNON.Body({ mass, shape });
     body.position.set(x, y, z);  // Set the position of the body
     world.addBody(body);  // Add the body to the physics simulation
@@ -46,34 +46,34 @@ function generateBox(x, y, z, width, depth, falls) {
     return {
         threejs: box,  // Visual representation in Three.js
         cannonjs: body,  // Physical representation in Cannon.js
-        width,  // Width of the box
-        depth,  // Depth of the box
+        width,  
+        depth,  
     };
 }
 
 // Adds a new layer to the stack, either as the foundation or a moving layer
-function addLayer(x, z, width, depth, direction) {
+function addLayer(x, z, width, depth, direction, incrementScore = true) {
     // Calculate the vertical position based on the number of existing layers
     const y = boxHeight * stack.length;
-
     // Create the new layer using generateBox (falls is false because it’s part of the stack)
     const layer = generateBox(x, y, z, width, depth, false);
-    
     // Assign the movement direction for the new layer ('x' or 'z')
     layer.direction = direction;
-    
     // Add the new layer to the stack array for tracking
     stack.push(layer);
+
+    if (incrementScore) {
+        score++;
+        updateScore();
+    }
 }
 
 // Adds an overhang to the scene when the top layer is partially cut off
 function addOverhang(x, z, width, depth) {
     // Place the overhang at the height of the current top layer
     const y = boxHeight * (stack.length - 1);
-    
     // Generate the overhanging box (falls is true since it should fall due to gravity)
     const overhang = generateBox(x, y, z, width, depth, true);
-    
     // Add the overhang to the overhangs array to track falling pieces
     overhangs.push(overhang);
 }
@@ -115,54 +115,36 @@ function cutBox(topLayer, overlap, size, delta) {
     topLayer.depth = newDepth;  // Update depth
 }
 
-/*function gameOver() {
-    if (animationId !== null) {
-        cancelAnimationFrame(animationId);
-        animationId = null;
-    }
-    
-    gameSTART = false;
-    alert("Game Over! You missed the stack. Would you like to go back?");
-    
-}*/
 
-// Animation Loop
 function animation() {
     if (isRestarting && gameSTART) {
         return;
     } else {
-        let speed = null;
+        let speed = boxSpeed; // Default speed
 
-        if (isPaused) {
-            speed = 0.9;
+        const topLayer = stack[stack.length - 1];
+        topLayer.threejs.position[topLayer.direction] += speed;
+        topLayer.cannonjs.position[topLayer.direction] += speed;
+
+        const position = topLayer.threejs.position[topLayer.direction];
+        if (Math.abs(position) > 10) {
+            stack.pop();
+            generateNewLayer(false); // Do not increment score when generating a new layer on a miss
         }
-        else {
-            speed = boxSpeed;
 
-            const topLayer = stack[stack.length - 1];
-            topLayer.threejs.position[topLayer.direction] += speed;
-            topLayer.cannonjs.position[topLayer.direction] += speed;
-
-            const position = topLayer.threejs.position[topLayer.direction];
-            if (Math.abs(position) > 10) {
-                stack.pop();
-                generateNewLayer();
-            }
-
-            if (camera.position.y < boxHeight * (stack.length - 2) + 4) {
-                camera.position.y += speed;
-            }
-
-            updatePhysics();
-            renderer.render(scene, camera);
-
-            // Use requestAnimationFrame instead of renderer.setAnimationLoop
-            animationId = requestAnimationFrame(animation);
+        if (camera.position.y < boxHeight * (stack.length - 2) + 4) {
+            camera.position.y += speed;
         }
+
+        updatePhysics();
+        renderer.render(scene, camera);
+
+        // Use requestAnimationFrame instead of renderer.setAnimationLoop
+        animationId = requestAnimationFrame(animation);
     }
 }
 
-function generateNewLayer() {
+function generateNewLayer(incrementScore = true) {
     // Get the current top layer's width and depth
     const topLayer = stack[stack.length - 1];
     const width = topLayer.width;
@@ -176,7 +158,7 @@ function generateNewLayer() {
     const z = direction === 'z' ? -10 : topLayer.threejs.position.z;
 
     // Add the new layer using the same dimensions (width, depth) as the current layer
-    addLayer(x, z, width, depth, direction);
+    addLayer(x, z, width, depth, direction, false);
 }
 
 // Initializes the game by setting up the scene, camera, renderer, and initial layers
@@ -192,10 +174,10 @@ function init() {
     const canvas = document.querySelector('canvas.webgl');  // Get the canvas from the DOM
 
     // Add the initial foundation layer at the bottom (stationary)
-    addLayer(0, 0, originalBoxSize, originalBoxSize);
+    addLayer(0, 0, originalBoxSize, originalBoxSize, false);
 
     // Add the first moving layer, starting off-screen to the left (moving along 'x')
-    addLayer(-10, 0, originalBoxSize, originalBoxSize, 'x');
+    addLayer(-10, 0, originalBoxSize, originalBoxSize, 'x', false);
 
     // Add ambient light for overall illumination
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -242,7 +224,6 @@ function gameOver() {
         cancelAnimationFrame(animationId);
         animationId = null;
     }
-
     // Reset the game state
     gameSTART = false;
 
@@ -273,7 +254,6 @@ function updateButtonVisibility() {
     console.log("Button visibility updated.");
 }
 
-
 let restartFlag = false;
 let isRestarting = false;
 
@@ -282,7 +262,6 @@ function restartGame() {
     isRestarting = true;
     restartFlag = true;
 
-    console.log("Restarting game...");
     // Stop the animation loop completely
     if (animationId !== null) {
         cancelAnimationFrame(animationId);
@@ -290,20 +269,28 @@ function restartGame() {
     }
     renderer.setAnimationLoop(null);
 
+    console.log("Resetting game state and Three.js objects...");
     // Reset game variables and state
     stack = [];
+    score = 0;
+    updateScore();
     overhangs = [];
     gameSTART = false;
     boxSpeed = initialBoxSpeed;
     isPaused = false;
 
-    // Reset Three.js and Cannon.js objects
-    while (scene.children.length > 0) {
-        const child = scene.children[0];
-        scene.remove(child);
-        if (child.geometry) child.geometry.dispose();
-        if (child.material) child.material.dispose();
+   while (scene.children.length > 0) {
+    const child = scene.children[0];
+    if (child.geometry) child.geometry.dispose();
+    if (child.material) {
+        if (Array.isArray(child.material)) {
+            child.material.forEach(mat => mat.dispose());
+        } else {
+            child.material.dispose();
+        }
     }
+    scene.remove(child);
+}
 
     while (world.bodies.length > 0) {
         world.removeBody(world.bodies[0]);
@@ -326,12 +313,23 @@ function restartGame() {
     }, 500);
 }
 
-
 //BUTTONS: 
+document.getElementById('score').style.display = 'none'; // Hide the score initially
+let score = 0;                   // Initialize the score
+
+// Function to update the score
+function updateScore() {
+    const scoreElement = document.getElementById('score');
+    if (scoreElement.style.display !== 'none') {
+        scoreElement.innerText = `${score}`; // Update the score text
+       
+    }
+}
 
 //info
 const infoModal = document.getElementById('info-modal');
 const infoIcon = document.getElementById("toggle-info");
+const stars = document.getElementById("starry-sky")
 // Toggle the modal visibility when the icon is clicked
 infoIcon.addEventListener("click", (event) => {
     event.stopPropagation()
@@ -349,12 +347,13 @@ const menuMusic = document.getElementById("menu-music");
 startBtn.addEventListener('click', (event) => {
     event.stopPropagation()
     document.getElementById('main-menu').style.display = 'none';
+   stars.style.display = 'none';
     infoIcon.style.display = 'none';
     infoModal.style.display = 'none';
     menuMusic.pause();
     menuMusic.currentTime = 0; // Reset to start
     
-    startGame(); // Placeholder function to start the Three.js game
+    startGame(); 
 });
 
 // Toggle Volume Event
@@ -371,8 +370,9 @@ volumeBtn.addEventListener("click", (event) => {
 function startGame() {
     console.log("Game Started");
 
-    // Explicitly start the game state
     gameSTART = true;
+    const scoreElement = document.getElementById('score');
+    scoreElement.style.display = 'block';
 
     window.removeEventListener('click', handleInput);
     window.addEventListener('click', handleInput);

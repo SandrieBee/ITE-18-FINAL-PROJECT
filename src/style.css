@@ -1,11 +1,9 @@
-*
-{
+* {
     margin: 0;
     padding: 0;
 }
 
-.webgl
-{
+.webgl {
     position: fixed;
     top: 0;
     left: 0;
@@ -25,29 +23,43 @@ canvas {
     height: 100%; 
 }
 
-
-
 body {
     margin: 0;
     padding: 0;
-    background: linear-gradient(135deg, #1e1e2f, #303054);
+    background: radial-gradient(circle, #000 60%, #001a4d);
     color: white;
     font-family: 'Arial', sans-serif;
     text-align: center;
     overflow: hidden;
 }
 
-
+#game-container {
+    position: fixed;           
+    top: 0;
+    left: 0;
+    width: 100vw;              
+    height: 100vh;             
+    background-size: cover;    
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;              
+}
 
 /* Game Title */
 #gameName {
-    font-size: 5rem;
+    font-size: 3vw; /* Responsive font size */
     color: #ffdd57;
-    text-shadow: 0px 4px 10px rgba(255, 221, 87, 0.8);
+    text-shadow: 0px 4px 15px rgba(255, 221, 87, 0.9), 
+                 0px 0px 5px rgba(255, 255, 255, 0.5);
     font-family: 'Orbitron', sans-serif;
-    margin-bottom: 20px;
-    margin-top: 50px;
-    padding: 30px;
+    margin-bottom: 1vh; 
+    margin-top: 1vh;
+    padding: 1vw;
+    border: 2px solid rgba(255, 221, 87, 0.5);
+    border-radius: 8px;
+    background: linear-gradient(90deg, rgba(255, 221, 87, 0.1), rgba(255, 221, 87, 0));
+    text-align: center;
+    box-shadow: 0px 0px 20px rgba(255, 221, 87, 0.3);
 }
 
 #main-menu {
@@ -63,12 +75,12 @@ body {
 }
 
 #main-menu h3 {
-    font-size: 2rem; 
+    font-size: 2vw; /* Responsive font size */
     font-weight: bold;
     color: #6ee7b7; 
-    text-shadow: 0px 4px 8px rgba(110, 231, 183, 0.8); /*glow effect */
-    margin-top: 50px;
-    padding: 10px;
+    text-shadow: 0px 4px 8px rgba(110, 231, 183, 0.8); /* Glow effect */
+    margin-top: 2vh;
+    padding: 1vw;
     font-family: 'Orbitron', sans-serif; 
     text-transform: uppercase; 
 }
@@ -80,12 +92,13 @@ body {
     line-height: 1.8;
     background: rgba(0, 0, 0, 0.5);
     padding: 20px;
-    margin: 30px;
+    margin: 2vh auto;
     border-radius: 10px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
     max-width: 80%;
     text-align: center;
 }
+
 /* Buttons */
 .button {
     font-size: 1.2rem;
@@ -97,13 +110,14 @@ body {
     padding: 10px 20px;
     margin: 10px;
     cursor: pointer;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.4);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
 /* Start Button Specific Styling */
 #start-btn {
-    background: linear-gradient(135deg, #6ee7b7, #34d399);
+    background: linear-gradient(135deg, #3d7bcde4, #330582);
+    font-size: 1.5rem;
 }
 
 /* Toggle Volume Button Specific Styling */
@@ -115,9 +129,9 @@ body {
 /* Info Icon */
 #info-icon {
     position: absolute;
-    top: 30px;
-    left: 50px;
-    font-size: 36px;
+    top: 5%;
+    left: 5%;
+    font-size: 2.5vw; 
     cursor: pointer;
     color: white;
     display: inline-block;
@@ -127,26 +141,27 @@ body {
 /* Modal inside the icon */
 #info-modal {
     position: absolute;
-    top: 0px; 
-    left: 50px;
-    background: rgba(0, 0, 0, 0.9);
+    top: 50%; 
+    left: 5%;
+    background: rgba(40, 35, 79, 0.9);
     color: white;
-    padding: 30px;
+    padding: 2vw;
     border-radius: 10px;
-    width: 250px;
+    width: 20vw;
     display: none;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
     z-index: 1000;
 }
 
 #info-modal h2 {
-    margin-bottom: 10px;
-    font-size: 18px;
+    margin-bottom: 1vh;
+    font-size: 1.5vw;
 }
 
 #info-modal p {
     margin: 8px 0;
-    font-size: 14px;
+    font-size: 1.2vw;
+    text-align: justify;
 }
 
 #menu-music {
@@ -163,6 +178,196 @@ body {
 button {
     margin: 5px;
     padding: 10px 20px;
-    font-size: 16px;
+    font-size: 1.2vw;
     cursor: pointer;
 }
+
+#score {
+    position: fixed; 
+    top: 5%; 
+    left: 5%; 
+    font-size: 1.5vw; 
+    font-weight: bold; 
+    color: #ffffff; 
+    background-color: rgb(18, 50, 14); 
+    padding: 1vw; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); 
+    z-index: 10;
+    text-align: center;
+    font-family: 'Arial', sans-serif; 
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #gameName {
+        font-size: 6vw;
+    }
+
+    #main-menu h3 {
+        font-size: 3vw;
+    }
+
+    #ZycksStory {
+        font-size: 1rem;
+    }
+
+    .button {
+        font-size: 1rem;
+        padding: 8px 16px;
+    }
+
+    #info-modal {
+        width: 80%;
+        font-size: 1rem;
+    }
+
+    #score {
+        font-size: 2vw;
+    }
+}
+
+@media (max-width: 480px) {
+    #gameName {
+        font-size: 8vw;
+    }
+
+    #main-menu h3 {
+        font-size: 4vw;
+    }
+
+    #ZycksStory {
+        font-size: 0.9rem;
+    }
+
+    .button {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+    }
+
+    #info-icon {
+        font-size: 2vw;
+    }
+
+    #info-modal {
+        width: 90%;
+        font-size: 0.9rem;
+    }
+
+    #score {
+        font-size: 3vw;
+    }
+}
+
+#alien-container {
+    position: absolute;
+    top: 50%; 
+    right: 2%; 
+    transform: translateY(-40%); 
+    z-index: 100; 
+}
+
+#alien-image {
+    max-width: 50vw;
+    max-height: 50vh; 
+    width: auto; 
+    height: auto; 
+    animation: float 5s ease-in-out infinite; 
+}
+
+/* Optional floating animation for a subtle effect */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(-50%) translateX(0);
+    }
+    50% {
+        transform: translateY(-60%) translateX(10px);
+    }
+}
+
+@media (max-width: 768px) {
+    #alien-image {
+        max-width: 20vw;
+        max-height: 25vh;
+        top: 30%;
+    }
+}
+
+@media (max-width: 480px) {
+    #alien-image {
+        max-width: 30vw;
+        max-height: 20vh;
+    }
+}
+
+#starry-sky {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  /* Styling the stars */
+  .star {
+    position: absolute;
+    background-color: rgb(231, 225, 53);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    opacity: 0.8;
+    animation: twinkle 2s infinite ease-in-out;
+  }
+  
+  /* Starry positions */
+  .star:nth-child(1) {
+    top: 20%;
+    left: 25%;
+    width: 10px;
+    height: 10px;
+    background-color: rgb(253, 253, 246);
+    animation-delay: 0s;
+  }
+  
+  .star:nth-child(2) {
+    top: 50%;
+    left: 60%;
+    width: 10px;
+    height: 10px;
+    animation-delay: 0.8s;
+  }
+  
+  .star:nth-child(3) {
+    top: 70%;
+    left: 30%;
+    width: 10px;
+    height: 10px;
+    background-color: rgb(255, 255, 255);
+    animation-delay: 1.2s;
+  }
+  
+  .star:nth-child(4) {
+    top: 10%;
+    left: 80%;
+    width: 10px;
+    height: 10px;
+    animation-delay: 0.4s;
+  }
+  
+  .star:nth-child(5) {
+    top: 40%;
+    left: 15%;
+    width: 10px;
+    height: 10px;
+    animation-delay: 1.6s;
+  }
+  
+  /* Twinkling animation */
+  @keyframes twinkle {
+    0%, 100% {
+      opacity: 0.5;
+      box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+    }
+    50% {
+      opacity: 1;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 1);
+    }
+  }
