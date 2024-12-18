@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./style.css">
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css">
 </head>
+
 <body>
     <!-- Canvas for Three.js -->
     <div id="game-container">
@@ -27,10 +28,26 @@
         <i class="fi fi-ss-interrogation" id="toggle-info" aria-label="Game Info"></i>
         <div id="info-modal" style="display: none;">
             <h2>Game Rules & Mechanics:</h2>
-            <p>1. Stack the boxes perfectly to reach the next level.</p>
-            <p>2. Misaligned stacks will shrink the box size.</p>
-            <p>3. The game ends when the box is too small to continue or you missed to stack the box.</p>
-            <p>Created by: [Your Name]</p>
+            
+            <p><strong>Objective:</strong> Stack the boxes perfectly to progress to the next level.</p>
+            <p><strong>Stacking Rules:</strong>
+                <br>Perfectly aligned stacks keep the box size consistent.
+                <br>Misaligned stacks will shrink the box size based on the degree of misalignment.
+                
+                <br><strong>Game Over Conditions:</strong>
+                <br>The game ends if the box becomes too small to continue.
+                <br>Missing a stack entirely also ends the game.
+                
+                <br><strong>Level Progression:</strong>
+                <br><strong>Level 1:</strong> Earth to Moon
+                <br>Stack 30 boxes successfully to reach the Moon.
+                <br><strong>Level 2:</strong> Moon to Mars
+                <br>Stack 60 boxes successfully to reach Mars.
+                
+                <br><strong>Winning Conditions:</strong>
+                <br>Successfully stacking all required boxes for the level allows you to progress to the next destination.
+                <br>Reaching Mars signifies the completion of the current game challenge.</p>
+
         </div>
     </div>
 
@@ -41,7 +58,7 @@
         <!--Story-->
         <h3>Welcome to Zyck's Adventure!</h3>
         <p id="ZycksStory">
-            Meet Zyck, an alien from the planet <strong>Alakitasia</strong>. 
+            Meet Zyck, an alien from the well-known red planet, <strong>Mars</strong>. 
             <br>His spaceship crashed on Earth due to low fuel while traveling across the universe. 
             <br>To return home, Zyck must rise above Earth by stacking boxes higher and higher. 
             <br>Can you help Zyck reach his home planet and continue his intergalactic journey?

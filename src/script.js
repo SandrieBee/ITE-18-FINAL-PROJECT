@@ -226,8 +226,8 @@ function gameOver() {
     }
     // Reset the game state
     gameSTART = false;
-
-    const userChoice = confirm("Game Over! Do you want to go back to the main menu? (Press 'Cancel' to restart the game)");
+    const userChoice = confirm(`GAME OVER! You stacked ${score} boxes. 
+        \nDo you want to go back to the main menu? (Press 'Cancel' to restart the game)`);
     if (userChoice) {
         goToMainMenu();
     } else {
@@ -314,15 +314,14 @@ function restartGame() {
 }
 
 //BUTTONS: 
-document.getElementById('score').style.display = 'none'; // Hide the score initially
-let score = 0;                   // Initialize the score
+document.getElementById('score').style.display = 'none'; 
+let score = 0;                   
 
 // Function to update the score
 function updateScore() {
     const scoreElement = document.getElementById('score');
     if (scoreElement.style.display !== 'none') {
         scoreElement.innerText = `${score}`; // Update the score text
-       
     }
 }
 
@@ -330,6 +329,7 @@ function updateScore() {
 const infoModal = document.getElementById('info-modal');
 const infoIcon = document.getElementById("toggle-info");
 const stars = document.getElementById("starry-sky")
+
 // Toggle the modal visibility when the icon is clicked
 infoIcon.addEventListener("click", (event) => {
     event.stopPropagation()
