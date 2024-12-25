@@ -6,7 +6,7 @@ let camera, scene, renderer, world;
 const originalBoxSize = 2;  // initial width and depth of the first box in the stack
 let stack = [];  // Array to store the stacked layers (each layer is an object containing its Three.js and Cannon.js representations)
 let overhangs = [];  // Array to store falling or overhanging parts of the boxes
-const boxHeight = 0.5;  // The uniform height of each box layer
+const boxHeight = 1.15;  // The uniform height of each box layer
 let gameSTART = false;  // Boolean to track if the game has started (controls the animation loop)
 let isPaused = false; // Pause game 
 let boxSpeed = 0.09; // Default box movement speed
@@ -173,6 +173,133 @@ function init() {
     scene = new THREE.Scene();
     const canvas = document.querySelector('canvas.webgl');  // Get the canvas from the DOM
 
+    // Create a sphere geometry
+    //const sphereGeometry2 = new THREE.SphereGeometry(50, 32, 32);
+
+
+    function addTexturedSphere() {
+        // Add background image to the scene
+        const textureLoader = new THREE.TextureLoader();
+        const backgroundTexture = textureLoader.load('/background1.jpg'); // Replace with the path to your background image
+        scene.background = backgroundTexture;
+
+        // Create Earth sphere geometry
+        const sphereGeometry = new THREE.SphereGeometry(100, 32, 32);
+    
+        // Load Earth texture
+        const earthTexture = textureLoader.load('/earth.jpeg'); // Adjust path as needed
+    
+        // Create material for Earth
+        const sphereMaterial = new THREE.MeshStandardMaterial({
+            map: earthTexture,
+        });
+    
+        // Create Earth mesh
+        const earthSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    
+        // Position the Earth sphere
+        earthSphere.rotation.x = Math.PI / 2; // Rotate 90 degrees around the X-axis
+        earthSphere.rotation.y = Math.PI / 2.4;
+        earthSphere.position.set(0, -105, 0);
+    
+        // Add Earth to the scene
+        scene.add(earthSphere);
+    
+        // Create Moon sphere geometry
+        const moonGeometry = new THREE.SphereGeometry(2, 32, 32); // Moon is smaller
+        // Load Moon texture
+        const moonTexture = textureLoader.load('/moon.jpg'); // Adjust path as needed
+        // Create material for Moon
+        const moonMaterial = new THREE.MeshStandardMaterial({
+            map: moonTexture,
+        });
+        // Create Moon mesh
+        const moonSphere = new THREE.Mesh(moonGeometry, moonMaterial);
+        // Position the Moon relative to Earth
+        moonSphere.position.set(-20, 9, -15); // Adjust distance and position relative to Earth
+        // Add Moon to the scene
+        scene.add(moonSphere);
+
+        // Create Mars sphere geometry
+        const marsGeometry = new THREE.SphereGeometry(4.2, 32, 32); // Mars is smaller
+        // Load Mars texture
+        const marsTexture = textureLoader.load('/mars.jpg'); // Adjust path as needed
+        // Create material for Mars
+        const marsMaterial = new THREE.MeshStandardMaterial({
+            map: marsTexture,
+        });
+        // Create Mars mesh
+        const marsSphere = new THREE.Mesh(marsGeometry, marsMaterial);
+        // Position the Mars relative to Earth
+        marsSphere.position.set(-40, 10, -47);
+        // Add Mars to the scene
+        scene.add(marsSphere);
+
+        // Create Jupiter sphere geometry
+        const jupiterGeometry = new THREE.SphereGeometry(0.3, 32, 32); // Jupiter is smaller
+        // Load Jupiter texture
+        const jupiterTexture = textureLoader.load('/jupiter.jpg'); // Adjust path as needed
+        // Create material for Jupiter
+        const jupiterMaterial = new THREE.MeshStandardMaterial({
+            map: jupiterTexture,
+        });
+        // Create Jupiter mesh
+        const jupiterSphere = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
+        // Position Jupiter
+        jupiterSphere.position.set(-25, 35, -17);
+        // Add Jupiter to the scene
+        scene.add(jupiterSphere);
+
+        // Create Venus sphere geometry
+        const venusGeometry = new THREE.SphereGeometry(0.1, 32, 32); // Venus is smaller
+        // Load Venus texture
+        const venusTexture = textureLoader.load('/venus.jpg'); // Adjust path as needed
+        // Create material for Venus
+        const venusMaterial = new THREE.MeshStandardMaterial({
+            map: venusTexture,
+        });
+        // Create Venus mesh
+        const venusSphere = new THREE.Mesh(venusGeometry, venusMaterial);
+        // Position the Venus relative to Earth
+        venusSphere.position.set(-24, -8, -30);
+        // Add Venus to the scene
+        scene.add(venusSphere);
+
+    }
+    
+    addTexturedSphere();
+
+
+
+/*
+    // Create a texture (use procedural texture or bumpMap for more depth)
+    const textureLoader = new THREE.TextureLoader();
+    const bumpTexture = textureLoader.load('https://upload.wikimedia.org/wikipedia/commons/7/73/Earth_bump_map.jpg'); // Example bump map
+
+    // Create a green material with texture
+    const sphereMaterial = new THREE.MeshStandardMaterial({
+        color: 0x00ff00, // Bright green color
+        bumpMap: bumpTexture, // Apply bump map texture for some depth
+        bumpScale: 0.1 // Subtle bump effect
+    });
+    const sphereMaterial1 = new THREE.MeshStandardMaterial({
+        color: 0x221fff, // Bright green color
+        bumpMap: bumpTexture, // Apply bump map texture for some depth
+        bumpScale: 0.1 // Subtle bump effect
+    });
+
+
+    // Create and position the second sphere
+    const greenSphere2 = new THREE.Mesh(sphereGeometry2, sphereMaterial1);
+    greenSphere2.position.set(-100, 0, -50); // Adjusted position
+    scene.add(greenSphere2);
+
+*/
+
+
+
+
+
     // Add the initial foundation layer at the bottom (stationary)
     addLayer(0, 0, originalBoxSize, originalBoxSize, false);
 
@@ -189,12 +316,12 @@ function init() {
     scene.add(directionalLight);
 
     // Set up an orthographic camera to provide a flat, 2D-like perspective
-    const width = 10;
+    const width = 15;
     const height = width * (window.innerHeight / window.innerWidth);  // Maintain aspect ratio
     camera = new THREE.OrthographicCamera(
         width / -2, width / 2, height / 2, height / -2, 1, 100
     );
-    camera.position.set(4, 4, 4);  // Position the camera above and to the side
+    camera.position.set(6, 6, 6);  // Position the camera above and to the side
     camera.lookAt(0, 0, 0);  // Make the camera look at the origin (0,0,0)
 
     // Initialize the WebGL renderer and link it to the canvas
@@ -226,8 +353,8 @@ function gameOver() {
     }
     // Reset the game state
     gameSTART = false;
-    const userChoice = confirm(`GAME OVER! You stacked ${score} boxes. 
-        \nDo you want to go back to the main menu? (Press 'Cancel' to restart the game)`);
+
+    const userChoice = confirm("Game Over! Do you want to go back to the main menu? (Press 'Cancel' to restart the game)");
     if (userChoice) {
         goToMainMenu();
     } else {
@@ -314,14 +441,15 @@ function restartGame() {
 }
 
 //BUTTONS: 
-document.getElementById('score').style.display = 'none'; 
-let score = 0;                   
+document.getElementById('score').style.display = 'none'; // Hide the score initially
+let score = 0;                   // Initialize the score
 
 // Function to update the score
 function updateScore() {
     const scoreElement = document.getElementById('score');
     if (scoreElement.style.display !== 'none') {
         scoreElement.innerText = `${score}`; // Update the score text
+       
     }
 }
 
@@ -329,7 +457,6 @@ function updateScore() {
 const infoModal = document.getElementById('info-modal');
 const infoIcon = document.getElementById("toggle-info");
 const stars = document.getElementById("starry-sky")
-
 // Toggle the modal visibility when the icon is clicked
 infoIcon.addEventListener("click", (event) => {
     event.stopPropagation()
@@ -450,4 +577,3 @@ window.addEventListener('keydown', (event) => {
         event.preventDefault();  // Prevent page scrolling when spacebar is pressed
     }
 });
-
