@@ -1,16 +1,17 @@
 import * as THREE from 'three'
 import * as CANNON from 'cannon-es'
 
-// Global variables
+// Global variables:
 let camera, scene, renderer, world;
-const originalBoxSize = 2;  // initial width and depth of the first box in the stack
-let stack = [];  // Array to store the stacked layers (each layer is an object containing its Three.js and Cannon.js representations)
-let overhangs = [];  // Array to store falling or overhanging parts of the boxes
-const boxHeight = 1.15;  // The uniform height of each box layer
-let gameSTART = false;  // Boolean to track if the game has started (controls the animation loop)
-let isPaused = false; // Pause game 
-let boxSpeed = 0.09; // Default box movement speed
-const initialBoxSpeed = 0.09; // Initial speed for resets
+const originalBoxSize = 3.5;  //initial width and depth of the first box in the stack
+let stack = [];  //store the stacked layers (each layer is an object containing its Three.js and Cannon.js representations)
+let overhangs = [];  //store falling or overhanging parts of the boxes
+const boxHeight = 1.2;  //height of each box layer
+let gameSTART = false;  //boolean to track if the game has started (controls the animation loop)
+let isPaused = false; //pausegame 
+let boxSpeed = 0.09; //default box movement speed
+const initialBoxSpeed = 0.095; //initial speed for resets
+let score = 0;  //initialize the score
 let animationId = null;
 
 
@@ -19,15 +20,13 @@ function generateBox(x, y, z, width, depth, falls) {
     // Create the geometry for the box in Three.js
     const boxGeometry = new THREE.BoxGeometry(width, boxHeight, depth);
     
-    // Generate a dynamic color based on stack height using HSL (hue increases with each layer)
-    //const color = new THREE.Color(`hsl(${30 + stack.length * 4}, 100%, 50%)`);
-    const hue = Math.min(120, 30 + stack.length * 3); // Caps the hue at 120 for green
-    const lightness = Math.min(50, 30 + stack.length * 0.5); // Caps lightness at 50%
-    const color = new THREE.Color(`hsl(${hue}, 100%, ${lightness}%)`);
+    const hue = Math.min(120, 30 + stack.length * 3)
+    const lightness = Math.min(50, 30 + stack.length * 0.5)
+    const color = new THREE.Color(`hsl(${hue}, 100%, ${lightness}%)`)
     
-    const boxMaterial = new THREE.MeshLambertMaterial({ color });
+    const boxMaterial = new THREE.MeshLambertMaterial({ color })
 
-    const box = new THREE.Mesh(boxGeometry, boxMaterial);
+    const box = new THREE.Mesh(boxGeometry, boxMaterial)
     box.position.set(x, y, z);
     scene.add(box);  
 
@@ -73,14 +72,14 @@ function addOverhang(x, z, width, depth) {
     // Place the overhang at the height of the current top layer
     const y = boxHeight * (stack.length - 1);
     // Generate the overhanging box (falls is true since it should fall due to gravity)
-    const overhang = generateBox(x, y, z, width, depth, true);
+    const overhang = generateBox(x, y, z, width, depth, true)
     // Add the overhang to the overhangs array to track falling pieces
-    overhangs.push(overhang);
+    overhangs.push(overhang)
 }
 
 // Updates the physics simulation for overhanging boxes
 function updatePhysics() {
-    world.step(1 / 60);  // Step the physics simulation at 60 fps
+    world.step(1 / 60)  // Step the physics simulation at 60 fps
 
     // Synchronize Cannon.js positions with Three.js meshes
     overhangs.forEach((element) => {
@@ -94,55 +93,27 @@ function cutBox(topLayer, overlap, size, delta) {
     const direction = topLayer.direction;  // Get the movement direction ('x' or 'z')
 
     // Calculate the new dimensions for the trimmed box
-    const newWidth = direction === 'x' ? overlap : topLayer.width;  // Adjust width if moving along 'x'
-    const newDepth = direction === 'z' ? overlap : topLayer.depth;  // Adjust depth if moving along 'z'
+    const newWidth = direction === 'x' ? overlap : topLayer.width;
+    const newDepth = direction === 'z' ? overlap : topLayer.depth; 
 
-    // Update the Three.js properties to visually represent the cut
-    topLayer.threejs.scale[direction === 'x' ? 'x' : 'z'] = overlap / size;  // Shrink the box
-    topLayer.threejs.position[direction] -= delta / 2;  // Adjust position to center the cut
+    //update the Three.js properties to visually represent the cut
+    topLayer.threejs.scale[direction === 'x' ? 'x' : 'z'] = overlap / size;  //Shrink the box
+    topLayer.threejs.position[direction] -= delta / 2;  //Adjust position to center the cut
 
     // Update the Cannon.js physics body for the trimmed box
-    topLayer.cannonjs.position[direction] -= delta / 2;  // Sync with Three.js position adjustment
+    topLayer.cannonjs.position[direction] -= delta / 2;  //sync with Three.js position adjustment
 
-    // Create a new shape with the updated dimensions for the physics engine
+    //Create a new shape with the updated dimensions for the physics engine
     const newShape = new CANNON.Box(new CANNON.Vec3(newWidth / 2, boxHeight / 2, newDepth / 2));
     
-    topLayer.cannonjs.shapes = [];  // Clear existing shapes to replace with the new one
-    topLayer.cannonjs.addShape(newShape);  // Add the new shape to the physics body
+    topLayer.cannonjs.shapes = [];  //clear existing shapes to replace with the new one
+    topLayer.cannonjs.addShape(newShape);  //add the new shape to the physics body
 
     // Update the metadata for the trimmed layer
-    topLayer.width = newWidth;  // Update width
-    topLayer.depth = newDepth;  // Update depth
+    topLayer.width = newWidth; 
+    topLayer.depth = newDepth;  
 }
 
-
-function animation() {
-    if (isRestarting && gameSTART) {
-        return;
-    } else {
-        let speed = boxSpeed; // Default speed
-
-        const topLayer = stack[stack.length - 1];
-        topLayer.threejs.position[topLayer.direction] += speed;
-        topLayer.cannonjs.position[topLayer.direction] += speed;
-
-        const position = topLayer.threejs.position[topLayer.direction];
-        if (Math.abs(position) > 10) {
-            stack.pop();
-            generateNewLayer(false); // Do not increment score when generating a new layer on a miss
-        }
-
-        if (camera.position.y < boxHeight * (stack.length - 2) + 4) {
-            camera.position.y += speed;
-        }
-
-        updatePhysics();
-        renderer.render(scene, camera);
-
-        // Use requestAnimationFrame instead of renderer.setAnimationLoop
-        animationId = requestAnimationFrame(animation);
-    }
-}
 
 function generateNewLayer(incrementScore = true) {
     // Get the current top layer's width and depth
@@ -172,9 +143,6 @@ function init() {
     // Create the Three.js scene where objects will be rendered
     scene = new THREE.Scene();
     const canvas = document.querySelector('canvas.webgl');  // Get the canvas from the DOM
-
-    // Create a sphere geometry
-    //const sphereGeometry2 = new THREE.SphereGeometry(50, 32, 32);
 
 
     function addTexturedSphere() {
@@ -222,83 +190,37 @@ function init() {
 
         // Create Mars sphere geometry
         const marsGeometry = new THREE.SphereGeometry(4.2, 32, 32); // Mars is smaller
-        // Load Mars texture
         const marsTexture = textureLoader.load('/mars.jpg'); // Adjust path as needed
-        // Create material for Mars
         const marsMaterial = new THREE.MeshStandardMaterial({
             map: marsTexture,
         });
-        // Create Mars mesh
         const marsSphere = new THREE.Mesh(marsGeometry, marsMaterial);
-        // Position the Mars relative to Earth
         marsSphere.position.set(-40, 10, -47);
-        // Add Mars to the scene
         scene.add(marsSphere);
 
         // Create Jupiter sphere geometry
         const jupiterGeometry = new THREE.SphereGeometry(0.3, 32, 32); // Jupiter is smaller
-        // Load Jupiter texture
         const jupiterTexture = textureLoader.load('/jupiter.jpg'); // Adjust path as needed
-        // Create material for Jupiter
         const jupiterMaterial = new THREE.MeshStandardMaterial({
             map: jupiterTexture,
         });
-        // Create Jupiter mesh
         const jupiterSphere = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
-        // Position Jupiter
         jupiterSphere.position.set(-25, 35, -17);
-        // Add Jupiter to the scene
         scene.add(jupiterSphere);
 
         // Create Venus sphere geometry
         const venusGeometry = new THREE.SphereGeometry(0.1, 32, 32); // Venus is smaller
-        // Load Venus texture
         const venusTexture = textureLoader.load('/venus.jpg'); // Adjust path as needed
-        // Create material for Venus
         const venusMaterial = new THREE.MeshStandardMaterial({
             map: venusTexture,
         });
-        // Create Venus mesh
         const venusSphere = new THREE.Mesh(venusGeometry, venusMaterial);
-        // Position the Venus relative to Earth
         venusSphere.position.set(-24, -8, -30);
-        // Add Venus to the scene
         scene.add(venusSphere);
 
     }
     
     addTexturedSphere();
-
-
-
-/*
-    // Create a texture (use procedural texture or bumpMap for more depth)
-    const textureLoader = new THREE.TextureLoader();
-    const bumpTexture = textureLoader.load('https://upload.wikimedia.org/wikipedia/commons/7/73/Earth_bump_map.jpg'); // Example bump map
-
-    // Create a green material with texture
-    const sphereMaterial = new THREE.MeshStandardMaterial({
-        color: 0x00ff00, // Bright green color
-        bumpMap: bumpTexture, // Apply bump map texture for some depth
-        bumpScale: 0.1 // Subtle bump effect
-    });
-    const sphereMaterial1 = new THREE.MeshStandardMaterial({
-        color: 0x221fff, // Bright green color
-        bumpMap: bumpTexture, // Apply bump map texture for some depth
-        bumpScale: 0.1 // Subtle bump effect
-    });
-
-
-    // Create and position the second sphere
-    const greenSphere2 = new THREE.Mesh(sphereGeometry2, sphereMaterial1);
-    greenSphere2.position.set(-100, 0, -50); // Adjusted position
-    scene.add(greenSphere2);
-
-*/
-
-
-
-
 
     // Add the initial foundation layer at the bottom (stationary)
     addLayer(0, 0, originalBoxSize, originalBoxSize, false);
@@ -312,24 +234,22 @@ function init() {
 
     // Add directional light to simulate sunlight (shadows, highlights)
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    directionalLight.position.set(10, 20, 0);  // Position the light above and to the side
+    directionalLight.position.set(10, 20, 0);  
     scene.add(directionalLight);
 
-    // Set up an orthographic camera to provide a flat, 2D-like perspective
     const width = 15;
     const height = width * (window.innerHeight / window.innerWidth);  // Maintain aspect ratio
     camera = new THREE.OrthographicCamera(
         width / -2, width / 2, height / 2, height / -2, 1, 100
     );
     camera.position.set(6, 6, 6);  // Position the camera above and to the side
-    camera.lookAt(0, 0, 0);  // Make the camera look at the origin (0,0,0)
+    camera.lookAt(0, 0, 0);  
 
-    // Initialize the WebGL renderer and link it to the canvas
+
     renderer = new THREE.WebGLRenderer({ canvas });
     renderer.setSize(window.innerWidth, window.innerHeight);  // Fullscreen rendering
     renderer.render(scene, camera);  // Render the initial frame
 
-    // Handle resizing the window by updating the camera and renderer
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;  // Adjust aspect ratio
         camera.updateProjectionMatrix();  // Update the camera projection
@@ -338,10 +258,63 @@ function init() {
     });
 }
 
+let isEndingTriggered = false;
+
+function animation() {
+    if (isRestarting && gameSTART) {
+        
+        return;
+    } else {
+        let speed = boxSpeed; 
+
+        const topLayer = stack[stack.length - 1];
+        topLayer.threejs.position[topLayer.direction] += speed;
+        topLayer.cannonjs.position[topLayer.direction] += speed;
+
+        const position = topLayer.threejs.position[topLayer.direction];
+        if (Math.abs(position) > 10) {
+            stack.pop();
+            generateNewLayer(false); // Do not increment score when generating a new layer on a miss
+        }
+
+        if (camera.position.y < boxHeight * (stack.length - 2) + 4) {
+            camera.position.y += speed;
+        }
+
+       
+            // Stop the game after stacking 50 blocks
+        if (score === 50 && !isEndingTriggered) {
+            isEndingTriggered = true; // Prevent further triggers
+            showEndingImage(); // Show the ending image
+            playCongratulationsSound(); // Play the sound once
+        
+            setTimeout(() => {
+                let userchoice = confirm(
+                    "HURRAY! Zyck finally made it back to his home planet. Thank you, fellow player, for helping him stack 50 boxes! Press OK to go back to the main menu."
+                );
+                if (userchoice) {
+                    goToMainMenu();
+                }
+                else{
+                    restartGame();
+                    isEndingTriggered = false;
+                    isRestarting = true;
+                }
+            }, 500); // Optional: Adjust the delay for better visuals
+        }
+        
+        updatePhysics();
+        renderer.render(scene, camera);
+
+
+        animationId = requestAnimationFrame(animation);
+    }
+}
+
 function gameOver() {
     if (!gameSTART) {
         console.warn("gameOver() called, but gameSTART is false. Ignoring.");
-        return; // Do nothing if the game hasn't started
+        return;
     }
 
     console.log("Game Over!");
@@ -360,6 +333,50 @@ function gameOver() {
     } else {
         restartGame();
     }
+}
+
+function showEndingImage() {
+    const endingImage = document.getElementById('ending-image');
+
+    if (endingImage) {
+        endingImage.style.display = 'block'; // Make the image visible
+    }
+
+    console.log("Congratulations! You've completed the stack!");
+    
+    // Stop the animation if it's already running
+    if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+
+    gameSTART = false; // Stop the game
+
+    // Animate the image
+    let angle = 0; // start angle for the shake effect
+    const shakeSpeed = 0.05; //speed of shaking (smaller value for slower shake)
+    const shakeAmplitude = 5; //maximum shaking distance in pixels
+
+    function animateImage() {
+        // Update the shake angle
+        angle += shakeSpeed;
+        
+        // Calculate the displacement
+        const offsetX = Math.sin(angle) * shakeAmplitude; // Horizontal shake
+        const offsetY = Math.cos(angle) * shakeAmplitude * 0.5; // Vertical shake
+
+        // Apply the transformation to shake the image
+        endingImage.style.transform = `translate(-50%, -50%) translate(${offsetX}px, ${offsetY}px)`; 
+
+        // Continue animation
+        if (!gameSTART) {
+            requestAnimationFrame(animateImage);
+        }
+    }
+
+    // Start the shake animation
+    animateImage();
+
 }
 // Function to handle going back to the main menu
 function goToMainMenu() {
@@ -395,6 +412,10 @@ function restartGame() {
         animationId = null;
     }
     renderer.setAnimationLoop(null);
+    const endingImage = document.getElementById('ending-image');
+        if (endingImage) {
+            endingImage.style.display = 'none'; // Make the image visible
+    }
 
     console.log("Resetting game state and Three.js objects...");
     // Reset game variables and state
@@ -442,15 +463,15 @@ function restartGame() {
 
 //BUTTONS: 
 document.getElementById('score').style.display = 'none'; // Hide the score initially
-let score = 0;                   // Initialize the score
+
 
 // Function to update the score
 function updateScore() {
     const scoreElement = document.getElementById('score');
     if (scoreElement.style.display !== 'none') {
-        scoreElement.innerText = `${score}`; // Update the score text
-       
+        scoreElement.innerText = `${score} / 50`; // Update the score text
     }
+    playSoundEffect(score) 
 }
 
 //info
@@ -510,12 +531,31 @@ function startGame() {
 }
 
 const stackingSound = new Audio("/soundEffect.mp3");
+const soundffect2 = new Audio("/soundeffect2.mp3");
 
 function playStackingSound() {
     stackingSound.currentTime = 0; // Reset sound to the beginning
     stackingSound.play().catch((error) => {
         console.error("Error playing stacking sound:", error);
     });
+}
+
+function playCongratulationsSound() {
+    const congratulationsSound = new Audio("/congratulatorymusic.mp3");
+    console.log("congratulatorymusic started")
+    congratulationsSound.currentTime = 0; // Reset sound to the beginning
+    congratulationsSound.play().catch((error) => {
+        console.error("Error playing congratulations sound:", error);
+    });
+}
+
+function playSoundEffect(score) {
+    if (score === 10 || score === 20 || score === 30 || score === 40) {
+        soundffect2.currentTime = 0; // Reset sound to the beginning
+        soundffect2.play().catch((error) => {
+        console.error("Error playing stacking sound:", error);
+    });
+    }
 }
 
 function handleInput() {

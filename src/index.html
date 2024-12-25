@@ -29,9 +29,9 @@
         <div id="info-modal" style="display: none;">
             <h2>Game Rules & Mechanics:</h2>
             
-            <p><strong>Objective:</strong> Stack the boxes perfectly to progress to the next level.</p>
+            <p><strong>Objective:</strong>Help Zyck reach his home planet by stacking 50 boxes.</p>
             <p><strong>Stacking Rules:</strong>
-                <br>Perfectly aligned stacks keep the box size consistent.
+                <br>Align the box as perfect as you can and keep the box size consistent.
                 <br>Misaligned stacks will shrink the box size based on the degree of misalignment.
                 
                 <br><strong>Game Over Conditions:</strong>
@@ -39,7 +39,7 @@
                 <br>Missing a stack entirely also ends the game.
 
                 <br><strong>Winning Conditions:</strong>
-                <br>Successfully stacking all required boxes for the level allows you to progress to the next destination.
+                <br>Successfully stacking all 50 boxes.
                 <br>Reaching Mars signifies the completion of the current game challenge.</p>
 
         </div>
@@ -65,11 +65,30 @@
             <img src="alien1.png" alt="Alien" id="alien-image">
         </div>
     </div>
+     
+     <!-- ending image -->
+     <img
+       id="ending-image"
+       src="DALLE.gif"
+       alt="Game Over"
+       style="
+         display: none;
+         position: absolute;
+         top: 50%;
+         left: 50%;
+         transform: translate(-50%, -50%);
+         z-index: 10;
+         max-width: 80%;
+         max-height: 80%;
+       "
+     />
 
 
     <!-- Background Music -->
     <audio id="menu-music" src="/mainmenuMusic.mp3" loop autoplay></audio>
     <div id="score"></div>
+
+
 
     
 
